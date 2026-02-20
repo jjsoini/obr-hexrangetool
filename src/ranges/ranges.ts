@@ -1,7 +1,5 @@
 import { isPlainObject } from "../util/isPlainObject";
-import { dagger } from "./templates/dagger";
-import { steel } from "./templates/steel";
-import { dragons } from "./templates/dragons";
+import { defaultrange } from "./templates/defaultrange";
 
 export type Ring = {
   radius: number;
@@ -20,7 +18,7 @@ export type Range = {
   hideSize?: boolean;
 };
 
-export const defaultRanges: Range[] = [dagger, steel, dragons];
+export const defaultRanges: Range[] = [defaultrange];
 
 function isRange(value: unknown): value is Range {
   return (
