@@ -1,0 +1,10 @@
+{
+  "name": "Ranges",
+  "version": "1.0.0",
+  "manifest_version": 1,
+  "author": "Owlbear Rodeo",
+  "homepage_url": "https://extensions.owlbear.rodeo/ranges",
+  "icon": "/logo.png",
+  "background_url": "/background.html",
+  "description": "A distance tool that cuts to the heart of measuring ranges without the dagger of a complex setup"
+}

@@ -1,0 +1,29 @@
+{
+  "name": "ranges",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc && vite build",
+    "preview": "vite preview"
+  },
+  "devDependencies": {
+    "@types/react": "^19.1.11",
+    "@types/react-dom": "^19.1.8",
+    "@vitejs/plugin-react": "^5.0.1",
+    "typescript": "~5.8.3",
+    "vite": "^7.1.2",
+    "vite-plugin-glsl": "^1.5.1"
+  },
+  "dependencies": {
+    "@emotion/react": "^11.14.0",
+    "@emotion/styled": "^11.14.1",
+    "@fontsource/roboto": "^5.2.6",
+    "@mui/icons-material": "^7.3.1",
+    "@mui/material": "^7.3.1",
+    "@owlbear-rodeo/sdk": "^3.1.0",
+    "react": "^19.1.1",
+    "react-dom": "^19.1.1"
+  }
+}
