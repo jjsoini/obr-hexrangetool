@@ -224,9 +224,12 @@ export function registerRangeTool() {
 
       const tokenPosition =
         event.target && !event.target.locked && event.target.position;
-      const initialPosition = tokenPosition
-        ? tokenPosition
-        : await OBR.scene.grid.snapPosition(event.pointerPosition, 1, false, true);
+      const initialPosition = await OBR.scene.grid.snapPosition(
+        event.pointerPosition,
+        1,
+        false,
+        true
+      );
       // Account for the grab offset so the token doesn't snap to the pointer
       if (tokenPosition) {
         grabOffset = Math2.subtract(event.pointerPosition, tokenPosition);
