@@ -17,7 +17,7 @@ float square(vec2 p) {
 }
 
 void addRing(inout vec3 color, inout float alpha, vec3 ringColor, float radius, float prevRadius, float dist) {
-  if (radius <= 0.0) return;
+  if (radius <= 0.0 || radius <= prevRadius) return;
   float outer = step(dist, radius);
   float inner = step(dist, prevRadius);
   float mask = outer - inner;

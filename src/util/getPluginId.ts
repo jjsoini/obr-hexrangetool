@@ -1,4 +1,4 @@
 /** Get the reverse domain name id for this plugin at a given path */
 export function getPluginId(path: string) {
-  return `rodeo.owlbear.ranges/${path}`;
+  return `jjsoini.pulpscape.blastrange/${path}`;
 }

@@ -14,8 +14,10 @@ import { canUpdateItem } from "./permission";
 import ringSksl from "./ring.frag";
 import { getPluginId } from "../util/getPluginId";
 import { getMetadata } from "../util/getMetadata";
-import { Color, getStoredTheme, Theme } from "../theme/themes";
 import { RangeType, Ring, Range, defaultRanges } from "../ranges/ranges";
+
+type Color = { r: number; g: number; b: number };
+const RING_COLOR: Color = { r: 220, g: 38, b: 38 };
 import { flattenGridScale } from "../util/flattenGridScale";
 
 let rangeInteraction: InteractionManager<Item[]> | null = null;
@@ -30,8 +32,8 @@ function getColorString(color: Color) {
 }
 
 function getRadiusForRing(ring: Ring, dpi: number) {
-  // Offset the ring by half a grid unit to account for the center of the grid
-  return ring.radius * dpi + dpi / 2;
+  // Floor to full grid cells, then offset by half a cell to account for the center
+  return Math.floor(ring.radius) * dpi + dpi / 2;
 }
 
 function getLabelTextColor(color: Color, threshold: number) {
@@ -96,7 +98,6 @@ function getLabel(
 
 async function getShaders(
   center: Vector2,
-  theme: Theme,
   range: Range
 ): Promise<Item[]> {
   const dpi = await OBR.scene.grid.getDpi();
@@ -116,8 +117,6 @@ async function getShaders(
   for (let dataIndex = 0; dataIndex < 5; dataIndex++) {
     const ring1Index = dataIndex * 2;
     const ring2Index = dataIndex * 2 + 1;
-    const color1 = theme.colors[ring1Index % theme.colors.length];
-    const color2 = theme.colors[ring2Index % theme.colors.length];
     const ring1 = range.rings[ring1Index];
     const ring2 = range.rings[ring2Index];
     const radius1 = ring1 ? getRadiusForRing(ring1, dpi) : 0;
@@ -126,12 +125,12 @@ async function getShaders(
       radius1,
       radius2,
       0,
-      color1.r / 255,
-      color1.g / 255,
-      color1.b / 255,
-      color2.r / 255,
-      color2.g / 255,
-      color2.b / 255,
+      RING_COLOR.r / 255,
+      RING_COLOR.g / 255,
+      RING_COLOR.b / 255,
+      RING_COLOR.r / 255,
+      RING_COLOR.g / 255,
+      RING_COLOR.b / 255,
     ];
 
     uniforms.push({
@@ -183,16 +182,14 @@ half4 main(float2 coord) {
 
 async function getRings(
   center: Vector2,
-  theme: Theme,
   range: Range
 ): Promise<Item[]> {
   const dpi = await OBR.scene.grid.getDpi();
   const gridScale = await OBR.scene.grid.getScale();
+  const color = getColorString(RING_COLOR);
+  const textColor = getLabelTextColor(RING_COLOR, 180);
   const items = [];
   for (let i = 0; i < range.rings.length; i++) {
-    const baseColor = theme.colors[i % theme.colors.length];
-    const color = getColorString(baseColor);
-    const textColor = getLabelTextColor(baseColor, 180);
     const ring = range.rings[i];
     const radius = getRadiusForRing(ring, dpi);
     let ringOffset = { x: 0, y: 0 };
@@ -262,8 +259,8 @@ async function finalizeMove() {
   }
 }
 
-export function createRangeTool() {
-  OBR.tool.createMode({
+export function registerRangeTool() {
+  return OBR.tool.createMode({
     id: getPluginId("mode/range"),
     icons: [
       {
@@ -283,7 +280,9 @@ export function createRangeTool() {
 
       const tokenPosition =
         event.target && !event.target.locked && event.target.position;
-      const initialPosition = tokenPosition || event.pointerPosition;
+      const initialPosition = tokenPosition
+        ? tokenPosition
+        : await OBR.scene.grid.snapPosition(event.pointerPosition, 1, false, true);
       // Account for the grab offset so the token doesn't snap to the pointer
       if (tokenPosition) {
         grabOffset = Math2.subtract(event.pointerPosition, tokenPosition);
@@ -303,14 +302,25 @@ export function createRangeTool() {
       }
 
       const sceneMetadata = await OBR.scene.getMetadata();
-      const range = (sceneMetadata[getPluginId("range")] ??
+      const rawRange = (sceneMetadata[getPluginId("range")] ??
         defaultRanges[0]) as Range;
 
-      const theme = getStoredTheme();
-      shaders = await getShaders(initialPosition, theme, range);
+      // Deduplicate rings that floor to the same drawn radius
+      const seenRadii = new Set<number>();
+      const range: Range = {
+        ...rawRange,
+        rings: rawRange.rings.filter((ring) => {
+          const r = Math.floor(ring.radius);
+          if (seenRadii.has(r)) return false;
+          seenRadii.add(r);
+          return true;
+        }),
+      };
+
+      shaders = await getShaders(initialPosition, range);
       await OBR.scene.local.addItems(shaders);
 
-      const rangeItems = await getRings(initialPosition, theme, range);
+      const rangeItems = await getRings(initialPosition, range);
       rangeInteraction = await OBR.interaction.startItemInteraction(rangeItems);
     },
     async onToolDragStart() {
@@ -333,6 +343,12 @@ export function createRangeTool() {
           });
         }
       } else if (rangeInteraction) {
+        const center = await OBR.scene.grid.snapPosition(
+          event.pointerPosition,
+          1,
+          false,
+          true
+        );
         const update = rangeInteraction[0];
         update?.((items) => {
           for (const item of items) {
@@ -340,13 +356,13 @@ export function createRangeTool() {
               x: 0,
               y: 0,
             });
-            item.position = Math2.subtract(event.pointerPosition, offset);
+            item.position = Math2.subtract(center, offset);
           }
         });
         if (shaders.length > 0) {
           OBR.scene.local.updateItems(shaders, (items) => {
             for (const item of items) {
-              item.position = event.pointerPosition;
+              item.position = center;
             }
           });
         }
@@ -366,7 +382,7 @@ export function createRangeTool() {
       finalizeMove();
       cleanup();
     },
-    shortcut: "O",
+    shortcut: "H",
     cursors: [
       {
         cursor: "grabbing",
@@ -401,4 +417,8 @@ export function createRangeTool() {
       },
     ],
   });
+}
+
+export function unregisterRangeTool() {
+  return OBR.tool.removeMode(getPluginId("mode/range"));
 }

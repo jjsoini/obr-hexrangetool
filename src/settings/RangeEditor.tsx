@@ -16,7 +16,6 @@ import AddRounded from "@mui/icons-material/AddRounded";
 import { SmallLabel } from "./SmallLabel";
 import { RingItem } from "./RingItem";
 import { RangeTypeButtonGroup } from "./RangeTypeButtonGroup";
-import { getStoredTheme } from "../theme/themes";
 import { Range } from "../ranges/ranges";
 
 export function RangeEditor({
@@ -28,8 +27,6 @@ export function RangeEditor({
   onChange?: (range: Range) => void;
   onDelete?: (range: Range) => void;
 }) {
-  const [theme] = useState(() => getStoredTheme());
-
   function addRing() {
     const maxRadius = Math.max(...range.rings.map((r) => r.radius));
     onChange?.({
@@ -55,14 +52,12 @@ export function RangeEditor({
       <Box sx={{ flexGrow: 1 }}>
         <List disablePadding>
           {range.rings.map((ring, i, rings) => {
-            const color = theme.colors[i % theme.colors.length];
             const logRadius = Math.log(ring.radius + 1);
             const logComplete = logRadius / logMaxRadius;
             return (
               <RingItem
                 key={ring.id}
                 ring={ring}
-                color={color}
                 complete={logComplete}
                 iconRadius={i + 1}
                 ringIndex={i}

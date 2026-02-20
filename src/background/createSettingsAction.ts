@@ -2,8 +2,8 @@ import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../util/getPluginId";
 import settingsIcon from "../assets/settings.svg";
 
-export function createSettingsAction() {
-  OBR.tool.createAction({
+export function registerSettingsAction() {
+  return OBR.tool.createAction({
     id: getPluginId("action/settings"),
     icons: [
       {
@@ -34,4 +34,8 @@ export function createSettingsAction() {
       });
     },
   });
+}
+
+export function unregisterSettingsAction() {
+  return OBR.tool.removeAction(getPluginId("action/settings"));
 }

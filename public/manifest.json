@@ -1,10 +1,9 @@
 {
-  "name": "Ranges",
+  "name": "Blast Range",
   "version": "1.0.0",
   "manifest_version": 1,
-  "author": "Owlbear Rodeo",
-  "homepage_url": "https://extensions.owlbear.rodeo/ranges",
+  "author": "Pulpscape",
   "icon": "/logo.png",
   "background_url": "/background.html",
-  "description": "A distance tool that cuts to the heart of measuring ranges without the dagger of a complex setup"
+  "description": "Range tool for hex grids."
 }

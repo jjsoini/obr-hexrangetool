@@ -86,7 +86,17 @@ export function Settings() {
       return false;
     }
     const isEqual =
-      JSON.stringify(customRange) === JSON.stringify(selectedRange);
+      customRange.name === selectedRange.name &&
+      customRange.type === selectedRange.type &&
+      customRange.hideLabel === selectedRange.hideLabel &&
+      customRange.hideSize === selectedRange.hideSize &&
+      customRange.rings.length === selectedRange.rings.length &&
+      customRange.rings.every(
+        (ring, i) =>
+          ring.id === selectedRange.rings[i].id &&
+          ring.name === selectedRange.rings[i].name &&
+          ring.radius === selectedRange.rings[i].radius
+      );
     return !isEqual;
   }, [customRanges, selectedRange]);
 

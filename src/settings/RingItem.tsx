@@ -11,7 +11,6 @@ import IconButton from "@mui/material/IconButton";
 import { keyframes } from "@mui/material/styles";
 
 import { type Ring, type RangeType } from "../ranges/ranges";
-import { Color } from "../theme/themes";
 import NumberField from "../util/NumberField";
 import { useOBRContext } from "./OBRContext";
 import { flattenGridScale } from "../util/flattenGridScale";
@@ -27,7 +26,6 @@ const slideInRight = keyframes`
 
 export function RingItem({
   ring,
-  color,
   complete,
   iconRadius,
   onChange,
@@ -37,7 +35,6 @@ export function RingItem({
   hideLabel,
   rangeType,
 }: {
-  color: Color;
   ring: Ring;
   complete: number;
   iconRadius: number;
@@ -183,7 +180,7 @@ export function RingItem({
           left: 0,
           bottom: 0,
           zIndex: -1,
-          backgroundColor: `rgb(${color.r}, ${color.g}, ${color.b})`,
+          backgroundColor: "rgb(220, 38, 38)",
           borderTopLeftRadius: "8px",
           borderBottomLeftRadius: "8px",
           borderTopRightRadius: "20px",
