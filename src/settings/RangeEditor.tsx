@@ -15,7 +15,6 @@ import AddRounded from "@mui/icons-material/AddRounded";
 
 import { SmallLabel } from "./SmallLabel";
 import { RingItem } from "./RingItem";
-import { RangeTypeButtonGroup } from "./RangeTypeButtonGroup";
 import { Range } from "../ranges/ranges";
 
 export function RangeEditor({
@@ -59,7 +58,6 @@ export function RangeEditor({
                 key={ring.id}
                 ring={ring}
                 complete={logComplete}
-                iconRadius={i + 1}
                 ringIndex={i}
                 onChange={
                   onChange
@@ -81,7 +79,6 @@ export function RangeEditor({
                 }
                 hideLabel={range.hideLabel}
                 hideSize={range.hideSize}
-                rangeType={range.type}
               />
             );
           })}
@@ -157,12 +154,6 @@ function Controls({
             }
           />
         </FormControl>
-        <RangeTypeButtonGroup
-          value={range.type}
-          onChange={(type) => {
-            onChange({ ...range, type });
-          }}
-        />
         <FormControl>
           <SmallLabel id="delete-label">Delete</SmallLabel>
           <IconButton

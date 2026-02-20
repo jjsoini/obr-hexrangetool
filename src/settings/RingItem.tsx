@@ -2,7 +2,6 @@ import { useState } from "react";
 
 import ListItem from "@mui/material/ListItem";
 import ListItemText from "@mui/material/ListItemText";
-import ListItemIcon from "@mui/material/ListItemIcon";
 import Box from "@mui/material/Box";
 import TextField from "@mui/material/TextField";
 import InputAdornment from "@mui/material/InputAdornment";
@@ -10,7 +9,7 @@ import CloseRounded from "@mui/icons-material/CloseRounded";
 import IconButton from "@mui/material/IconButton";
 import { keyframes } from "@mui/material/styles";
 
-import { type Ring, type RangeType } from "../ranges/ranges";
+import { type Ring } from "../ranges/ranges";
 import NumberField from "../util/NumberField";
 import { useOBRContext } from "./OBRContext";
 import { flattenGridScale } from "../util/flattenGridScale";
@@ -27,23 +26,19 @@ const slideInRight = keyframes`
 export function RingItem({
   ring,
   complete,
-  iconRadius,
   onChange,
   onDelete,
   ringIndex,
   hideSize,
   hideLabel,
-  rangeType,
 }: {
   ring: Ring;
   complete: number;
-  iconRadius: number;
   onChange?: (ring: Ring) => void;
   onDelete?: () => void;
   ringIndex: number;
   hideSize?: boolean;
   hideLabel?: boolean;
-  rangeType: RangeType;
 }) {
   const { gridScale } = useOBRContext();
   const [localName, setLocalName] = useState(ring.name);
@@ -137,36 +132,6 @@ export function RingItem({
     >
       {primary}
       {secondary}
-      {!onChange && (
-        <ListItemIcon sx={{ opacity: 0.7, minWidth: 0 }}>
-          <svg
-            width="24"
-            height="24"
-            viewBox="0 0 24 24"
-            fill="none"
-            xmlns="http://www.w3.org/2000/svg"
-          >
-            {rangeType === "circle" ? (
-              <circle
-                cx="12"
-                cy="12"
-                r={iconRadius}
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            ) : (
-              <rect
-                x={12 - iconRadius}
-                y={12 - iconRadius}
-                width={iconRadius * 2}
-                height={iconRadius * 2}
-                stroke="currentColor"
-                strokeWidth="2"
-              />
-            )}
-          </svg>
-        </ListItemIcon>
-      )}
       {onDelete && (
         <IconButton size="small" onClick={onDelete}>
           <CloseRounded />

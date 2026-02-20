@@ -3,7 +3,6 @@ import { Range } from "../ranges";
 export const defaultrange: Range = {
   name: "Default",
   id: "defaultrange",
-  type: "circle",
   hideSize: true,
   rings: [
     {

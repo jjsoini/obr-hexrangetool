@@ -14,7 +14,7 @@ import { canUpdateItem } from "./permission";
 import ringSksl from "./ring.frag";
 import { getPluginId } from "../util/getPluginId";
 import { getMetadata } from "../util/getMetadata";
-import { RangeType, Ring, Range, defaultRanges } from "../ranges/ranges";
+import { Ring, Range, defaultRanges } from "../ranges/ranges";
 
 type Color = { r: number; g: number; b: number };
 const RING_COLOR: Color = { r: 220, g: 38, b: 38 };
@@ -44,11 +44,9 @@ function getLabelTextColor(color: Color, threshold: number) {
 
 function getRing(
   center: Vector2,
-  offset: Vector2,
   size: number,
   name: string,
-  color: string,
-  type: RangeType
+  color: string
 ) {
   return buildShape()
     .fillOpacity(0)
@@ -56,13 +54,13 @@ function getRing(
     .strokeOpacity(0.9)
     .strokeColor(color)
     .strokeDash([10, 10])
-    .shapeType(type === "square" ? "RECTANGLE" : "CIRCLE")
-    .position(Math2.subtract(center, offset))
+    .shapeType("CIRCLE")
+    .position(center)
     .width(size)
     .height(size)
     .name(name)
     .metadata({
-      [getPluginId("offset")]: offset,
+      [getPluginId("offset")]: { x: 0, y: 0 },
     })
     .disableHit(true)
     .layer("POPOVER")
@@ -111,7 +109,7 @@ async function getShaders(
    */
   if (range.rings.length > 10) {
     console.warn(
-      `Range ${range.type} has more than 10 rings, rings shaders need updating to support more rings`
+      `Range has more than 10 rings, rings shaders need updating to support more rings`
     );
   }
   for (let dataIndex = 0; dataIndex < 5; dataIndex++) {
@@ -170,10 +168,6 @@ half4 main(float2 coord) {
         name: "maxFalloff",
         value: 0.6,
       },
-      {
-        name: "type",
-        value: range.type === "square" ? 1 : 0,
-      },
     ])
     .build();
 
@@ -192,13 +186,7 @@ async function getRings(
   for (let i = 0; i < range.rings.length; i++) {
     const ring = range.rings[i];
     const radius = getRadiusForRing(ring, dpi);
-    let ringOffset = { x: 0, y: 0 };
-    if (range.type === "square") {
-      ringOffset = { x: radius, y: radius };
-    }
-    items.push(
-      getRing(center, ringOffset, radius * 2, ring.name, color, range.type)
-    );
+    items.push(getRing(center, radius * 2, ring.name, color));
     const labelItemOffset = { x: 0, y: radius + labelOffset };
     let labelText = "";
     if (!range.hideLabel) {

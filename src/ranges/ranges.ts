@@ -7,12 +7,9 @@ export type Ring = {
   id: string;
 };
 
-export type RangeType = "circle" | "square";
-
 export type Range = {
   name: string;
   id: string;
-  type: RangeType;
   rings: Ring[];
   hideLabel?: boolean;
   hideSize?: boolean;
@@ -25,7 +22,6 @@ function isRange(value: unknown): value is Range {
     isPlainObject(value) &&
     "name" in value &&
     "id" in value &&
-    "type" in value &&
     "rings" in value
   );
 }

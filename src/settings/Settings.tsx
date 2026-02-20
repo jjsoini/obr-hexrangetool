@@ -87,7 +87,6 @@ export function Settings() {
     }
     const isEqual =
       customRange.name === selectedRange.name &&
-      customRange.type === selectedRange.type &&
       customRange.hideLabel === selectedRange.hideLabel &&
       customRange.hideSize === selectedRange.hideSize &&
       customRange.rings.length === selectedRange.rings.length &&
