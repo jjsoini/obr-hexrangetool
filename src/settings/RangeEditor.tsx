@@ -43,7 +43,7 @@ export function RangeEditor({
 
   const maxRadius = Math.max(...range.rings.map((r) => r.radius));
   // Fudge the numbers a bit so the graph looks better.
-  // We add 1 so the min radius is 2 as log(1) is 0 and we want to start at 1
+  // We add 1 so sub-1 radii still have a valid positive log scale.
   const logMaxRadius = Math.log(maxRadius + 1);
 
   return (

@@ -33,6 +33,12 @@ function getRadiusForRing(ring: Ring, dpi: number) {
   return Math.floor(ring.radius) * dpi + dpi / 2;
 }
 
+function getCenterHexSize(dpi: number) {
+  // OBR grid dpi is center-to-center spacing; HEXAGON width/height is corner-to-corner.
+  // Convert one hex cell to corner-to-corner size.
+  return (2 * dpi) / Math.sqrt(3);
+}
+
 function getLabelTextColor(color: Color, threshold: number) {
   // Luminance
   const brightness = (color.r * 299 + color.g * 587 + color.b * 114) / 1000;
@@ -47,7 +53,8 @@ function getRing(
   rotation: number
 ) {
   return buildShape()
-    .fillOpacity(0)
+    .fillColor(color)
+    .fillOpacity(0.10)
     .strokeWidth(2)
     .strokeOpacity(0.9)
     .strokeColor(color)
@@ -118,15 +125,24 @@ async function getRings(
   const dpi = await OBR.scene.grid.getDpi();
   const gridScale = await OBR.scene.grid.getScale();
   const gridType = await OBR.scene.grid.getType();
-  // OBR's HEXAGON shape defaults to flat-top; rotate 30° for pointy-top grids
-  const rotation = gridType === "HEX_VERTICAL" ? 30 : 0;
+  // Keep existing inverted orientation for regular ranges.
+  const defaultRotation = gridType === "HEX_VERTICAL" ? 30 : 0;
+  // For center-cell ranges, align the hex orientation with the scene grid.
+  const centerCellRotation = defaultRotation === 30 ? 0 : 30;
   const color = getColorString(RING_COLOR);
   const textColor = getLabelTextColor(RING_COLOR, 180);
   const items = [];
   for (let i = 0; i < range.rings.length; i++) {
     const ring = range.rings[i];
     const radius = getRadiusForRing(ring, dpi);
-    items.push(getRing(center, radius * 2, ring.name, color, rotation));
+    const roundedRadius = Math.floor(ring.radius);
+    const rotation =
+      roundedRadius === 0 ? centerCellRotation : defaultRotation;
+    const isHexGrid =
+      gridType === "HEX_HORIZONTAL" || gridType === "HEX_VERTICAL";
+    const size =
+      isHexGrid && roundedRadius === 0 ? getCenterHexSize(dpi) : radius * 2;
+    items.push(getRing(center, size, ring.name, color, rotation));
     const labelItemOffset = { x: 0, y: radius + labelOffset };
     let labelText = "";
     if (!range.hideLabel) {

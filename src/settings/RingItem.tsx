@@ -82,7 +82,7 @@ export function RingItem({
       }
       textToNumber={(value) => parseFloat(value) / gridScale.parsed.multiplier}
       step={1}
-      min={1}
+      min={0.01}
       max={1000}
       size="small"
       value={ring.radius}
