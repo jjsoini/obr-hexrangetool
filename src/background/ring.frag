@@ -1,44 +1,32 @@
-uniform mat3 model;
-uniform mat3 data1;
-uniform mat3 data2;
-uniform mat3 data3;
-uniform mat3 data4;
-uniform mat3 data5;
-uniform float minFalloff;
-uniform float maxFalloff;
+// DEBUG: draws hex area (dist <= 1) using scene-coordinate origin offset
+uniform vec2 origin;
+uniform float hexSize; // dpi / sqrt(3)
+uniform float hexType; // 0.0 = HEX_VERTICAL (pointy-top), 1.0 = HEX_HORIZONTAL (flat-top)
 
-void addRing(inout vec3 color, inout float alpha, vec3 ringColor, float radius, float prevRadius, float dist) {
-  if (radius <= 0.0 || radius <= prevRadius) return;
-  float outer = step(dist, radius);
-  float inner = step(dist, prevRadius);
-  float mask = outer - inner;
-  float a = (dist - prevRadius) / (radius - prevRadius);
-  float falloff = mix(minFalloff, maxFalloff, a);
-  alpha += falloff * mask;
-  color += mix(vec3(1, 1, 1), ringColor, falloff) * mask;
+float hexDist(vec2 p) {
+  float q, r;
+  if (hexType < 0.5) {
+    // Pointy-top
+    q = ( 0.5773503 * p.x - 0.3333333 * p.y) / hexSize;
+    r = ( 0.6666667 * p.y) / hexSize;
+  } else {
+    // Flat-top
+    q = ( 0.6666667 * p.x) / hexSize;
+    r = (-0.3333333 * p.x + 0.5773503 * p.y) / hexSize;
+  }
+  float s = -q - r;
+  float rq = round(q), rr = round(r), rs = round(s);
+  float dq = abs(rq - q), dr = abs(rr - r), ds = abs(rs - s);
+  if (dq > dr && dq > ds) rq = -rr - rs;
+  else if (dr > ds) rr = -rq - rs;
+  else rs = -rq - rr;
+  return (abs(rq) + abs(rr) + abs(rs)) / 2.0;
 }
 
 half4 main(float2 coord) {
-  vec2 worldCoord = (model * vec3(coord, 1.0)).xy;
-  float dist = length(worldCoord);
-
-  vec3 color = vec3(0.0);
-  float alpha = 0.0;
-  
-  addRing(color, alpha, data1[1].rgb, data1[0].x, 0.0, dist);
-  addRing(color, alpha, data1[2].rgb, data1[0].y, data1[0].x, dist);
-
-  addRing(color, alpha, data2[1].rgb, data2[0].x, data1[0].y, dist);
-  addRing(color, alpha, data2[2].rgb, data2[0].y, data2[0].x, dist);
-  
-  addRing(color, alpha, data3[1].rgb, data3[0].x, data2[0].y, dist);
-  addRing(color, alpha, data3[2].rgb, data3[0].y, data3[0].x, dist);
-  
-  addRing(color, alpha, data4[1].rgb, data4[0].x, data3[0].y, dist);
-  addRing(color, alpha, data4[2].rgb, data4[0].y, data4[0].x, dist);
-  
-  addRing(color, alpha, data5[1].rgb, data5[0].x, data4[0].y, dist);
-  addRing(color, alpha, data5[2].rgb, data5[0].y, data5[0].x, dist);
-  
-  return half4(vec3(color) * alpha, alpha);
+  float dist = round(hexDist(coord - origin));
+  if (dist <= 1.0) {
+    return half4(0.863, 0.149, 0.149, 1.0);
+  }
+  return half4(0.0);
 }

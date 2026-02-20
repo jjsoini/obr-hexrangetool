@@ -6,12 +6,9 @@ import OBR, {
   type InteractionManager,
   type Item,
   type Vector2,
-  type Uniform,
-  type Matrix,
 } from "@owlbear-rodeo/sdk";
 import rangeIcon from "../assets/range.svg";
 import { canUpdateItem } from "./permission";
-import ringSksl from "./ring.frag";
 import { getPluginId } from "../util/getPluginId";
 import { getMetadata } from "../util/getMetadata";
 import { Ring, Range, defaultRanges } from "../ranges/ranges";
@@ -46,7 +43,8 @@ function getRing(
   center: Vector2,
   size: number,
   name: string,
-  color: string
+  color: string,
+  rotation: number
 ) {
   return buildShape()
     .fillOpacity(0)
@@ -54,10 +52,11 @@ function getRing(
     .strokeOpacity(0.9)
     .strokeColor(color)
     .strokeDash([10, 10])
-    .shapeType("CIRCLE")
+    .shapeType("HEXAGON")
     .position(center)
     .width(size)
     .height(size)
+    .rotation(rotation)
     .name(name)
     .metadata({
       [getPluginId("offset")]: { x: 0, y: 0 },
@@ -94,49 +93,7 @@ function getLabel(
     .build();
 }
 
-async function getShaders(
-  center: Vector2,
-  range: Range
-): Promise<Item[]> {
-  const dpi = await OBR.scene.grid.getDpi();
-  const uniforms: Uniform[] = [];
-
-  /*
-   * Data uniform layout (each mat3 contains 2 circles):
-   * [r1, r2, 0]  [R1, G1, B1]  [R2, G2, B2]
-   * Where: r = radius, R/G/B = color components (0.0-1.0)
-   * The shader is hard coded with 5 mat3 uniforms, so it supports up to 10 rings
-   */
-  if (range.rings.length > 10) {
-    console.warn(
-      `Range has more than 10 rings, rings shaders need updating to support more rings`
-    );
-  }
-  for (let dataIndex = 0; dataIndex < 5; dataIndex++) {
-    const ring1Index = dataIndex * 2;
-    const ring2Index = dataIndex * 2 + 1;
-    const ring1 = range.rings[ring1Index];
-    const ring2 = range.rings[ring2Index];
-    const radius1 = ring1 ? getRadiusForRing(ring1, dpi) : 0;
-    const radius2 = ring2 ? getRadiusForRing(ring2, dpi) : 0;
-    const value: Matrix = [
-      radius1,
-      radius2,
-      0,
-      RING_COLOR.r / 255,
-      RING_COLOR.g / 255,
-      RING_COLOR.b / 255,
-      RING_COLOR.r / 255,
-      RING_COLOR.g / 255,
-      RING_COLOR.b / 255,
-    ];
-
-    uniforms.push({
-      name: `data${dataIndex + 1}`,
-      value: value,
-    });
-  }
-
+async function getShaders(): Promise<Item[]> {
   const darken = buildEffect()
     .sksl(
       `
@@ -151,27 +108,7 @@ half4 main(float2 coord) {
     .blendMode("MULTIPLY")
     .build();
 
-  const color = buildEffect()
-    .sksl(ringSksl)
-    .effectType("VIEWPORT")
-    .position(center)
-    .layer("POINTER")
-    .zIndex(1)
-    .blendMode("COLOR")
-    .uniforms([
-      ...uniforms,
-      {
-        name: "minFalloff",
-        value: 0.1,
-      },
-      {
-        name: "maxFalloff",
-        value: 0.6,
-      },
-    ])
-    .build();
-
-  return [darken, color];
+  return [darken];
 }
 
 async function getRings(
@@ -180,13 +117,16 @@ async function getRings(
 ): Promise<Item[]> {
   const dpi = await OBR.scene.grid.getDpi();
   const gridScale = await OBR.scene.grid.getScale();
+  const gridType = await OBR.scene.grid.getType();
+  // OBR's HEXAGON shape defaults to flat-top; rotate 30° for pointy-top grids
+  const rotation = gridType === "HEX_VERTICAL" ? 30 : 0;
   const color = getColorString(RING_COLOR);
   const textColor = getLabelTextColor(RING_COLOR, 180);
   const items = [];
   for (let i = 0; i < range.rings.length; i++) {
     const ring = range.rings[i];
     const radius = getRadiusForRing(ring, dpi);
-    items.push(getRing(center, radius * 2, ring.name, color));
+    items.push(getRing(center, radius * 2, ring.name, color, rotation));
     const labelItemOffset = { x: 0, y: radius + labelOffset };
     let labelText = "";
     if (!range.hideLabel) {
@@ -305,7 +245,7 @@ export function registerRangeTool() {
         }),
       };
 
-      shaders = await getShaders(initialPosition, range);
+      shaders = await getShaders();
       await OBR.scene.local.addItems(shaders);
 
       const rangeItems = await getRings(initialPosition, range);
