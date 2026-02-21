@@ -1,6 +1,6 @@
 # Hex Range
 
-![Hex Range header](https://raw.githubusercontent.com/jjsoini/obr-extension-store/main/hexrangetool/header.jpg)
+![Hex Range header](https://raw.githubusercontent.com/jjsoini/obr-extensions-store/main/hexrangetool/header.jpg)
 
 Hex Range adds a hex area range display to the measure tool when your scene is using a hex grid.
 
