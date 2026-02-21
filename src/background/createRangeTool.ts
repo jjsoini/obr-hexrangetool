@@ -357,7 +357,7 @@ export function registerRangeTool() {
     icons: [
       {
         icon: rangeIcon,
-        label: "Range",
+        label: "Hex Range",
         filter: {
           activeTools: ["rodeo.owlbear.tool/measure"],
           permissions: ["RULER_CREATE"],

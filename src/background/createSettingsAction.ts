@@ -8,7 +8,7 @@ export function registerSettingsAction() {
     icons: [
       {
         icon: settingsIcon,
-        label: "Range Settings",
+        label: "Hex Range Settings",
         filter: {
           activeTools: ["rodeo.owlbear.tool/measure"],
           permissions: ["RULER_CREATE"],

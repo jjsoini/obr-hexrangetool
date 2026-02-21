@@ -1,6 +1,18 @@
-# Blast Range
+# Hex Range
 
-An Owlbear Rodeo extension for a circular distance tool that cuts to the heart of measuring ranges without the dagger of a complex setup
+![Hex Range header](https://raw.githubusercontent.com/jjsoini/obr-extension-store/main/hexrangetool/header.jpg)
+
+Hex Range adds a hex area range display to the measure tool when your scene is using a hex grid.
+
+## Using the Tool
+
+Select the Hex Range mode from the measure tool (shortcut: **H**).
+
+- **Click** anywhere on the map to show range zones centered on that hex
+
+## Settings
+
+Create your custom presets in the Settings
 
 ## License
 

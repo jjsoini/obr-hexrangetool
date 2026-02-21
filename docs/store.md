@@ -1,28 +1,25 @@
 ---
-title: Blast Range
-description: A distance tool that cuts to the heart of measuring ranges without the dagger of a complex setup
+title: Hex Range
+description: Hex range areas for Owlbear Rodeo — click anywhere on a hex grid to instantly display accurate range zones.
 author: Pulpscape
+image: https://raw.githubusercontent.com/jjsoini/obr-extension-store/main/hexrangetool/header.jpg
+icon: https://obr-hexrangetool.onrender.com/logo.png
 tags:
   - tool
+manifest: https://obr-hexrangetool.onrender.com/manifest.json
+learn-more: https://github.com/jjsoini/obr-hexrangetool
 ---
 
-# Blast Range
+# Hex Range
 
-Check ranges with a simple click and drag - no need to dagger through complex menus or settings. Perfect for when you need rough distance estimates at the heart of your workflow.
+Hex Range adds a hex area range display to the measure tool when your scene is using a hex grid.
 
-## Use the tool
+## Using the Tool
 
-This extension adds a new Range mode to the measure tool.
+Select the Hex Range mode from the measure tool (shortcut: **H**).
 
-Once this tool is selected you can view ranges by holding and draging in the Scene.
-If you move a token while this tool is active the range will stay stationary so you can see how far your token has moved.
+- **Click** anywhere on the map to show range zones centered on that hex
 
-## Adjust Settings
+## Settings
 
-The GM can control the labels, shape and size of a range.
-
-To do this use the Range Settings action.
-
-You can then pick from a list of presets or create your own range.
-
-When creating your own range you can give it a name, toggle showing the ring labels or sizes and change the shape between a circle or square.
+Create your custom presets in the Settings
