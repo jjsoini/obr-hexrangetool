@@ -6,29 +6,29 @@ export const defaultrange: Range = {
   hideSize: true,
   rings: [
     {
+      radius: 0.5,
+      name: "Same",
+      id: "default-samehex",
+    },
+    {
       radius: 1,
-      name: "Melee",
-      id: "default-melee",
+      name: "Adjacent",
+      id: "default-adjacent",
     },
     {
       radius: 2,
-      name: "Very Close",
-      id: "default-very-close",
+      name: "Close",
+      id: "default-close",
     },
     {
       radius: 3,
-      name: "Close",
-      id: "default-close",
+      name: "Near",
+      id: "default-near",
     },
     {
       radius: 4,
       name: "Far",
       id: "default-far",
-    },
-    {
-      radius: 5,
-      name: "Very Far",
-      id: "default-very-far",
     },
   ],
 };

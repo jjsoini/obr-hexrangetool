@@ -1,4 +1,5 @@
 import OBR, {
+  buildCurve,
   buildEffect,
   buildLabel,
   buildShape,
@@ -45,6 +46,148 @@ function getLabelTextColor(color: Color, threshold: number) {
   return brightness < threshold ? "white" : "black";
 }
 
+function getHexArea(
+  center: Vector2,
+  range: number,
+  dpi: number,
+  name: string,
+  color: string,
+  rotation: number
+) {
+  return buildCurve()
+    .fillColor(color)
+    .fillOpacity(0.10)
+    .strokeWidth(2)
+    .strokeOpacity(0.9)
+    .strokeColor(color)
+    .strokeDash([10, 10])
+    .tension(0)
+    .closed(true)
+    .position(center)
+    .name(name)
+    .metadata({
+      [getPluginId("offset")]: { x: 0, y: 0 },
+    })
+    .disableHit(true)
+    .layer("POPOVER")
+    .points(getHexAreaPoints(range, dpi, rotation))
+    .build();
+}
+
+function getHexAreaPoints(
+  range: number,
+  hexDiameter: number,
+  rotation: number
+) {
+  const apothem = hexDiameter / 2;
+  const side = hexDiameter / Math.sqrt(3);
+  const cornerRadius = side;
+  const sin30 = 0.5;
+
+  type Edge = { start: Vector2; end: Vector2 };
+  const edges = new Map<string, Edge>();
+
+  const rounded = Math.max(0, Math.floor(range));
+
+  function pointKey(point: Vector2) {
+    return `${point.x.toFixed(5)},${point.y.toFixed(5)}`;
+  }
+
+  function edgeKey(a: Vector2, b: Vector2) {
+    const ak = pointKey(a);
+    const bk = pointKey(b);
+    return ak < bk ? `${ak}|${bk}` : `${bk}|${ak}`;
+  }
+
+  function rotatePoint(point: Vector2, degrees: number): Vector2 {
+    const radians = (degrees * Math.PI) / 180;
+    const c = Math.cos(radians);
+    const s = Math.sin(radians);
+    return {
+      x: point.x * c - point.y * s,
+      y: point.x * s + point.y * c,
+    };
+  }
+
+  function getFlatTopHexCorners(center: Vector2): Vector2[] {
+    return [
+      { x: center.x + cornerRadius, y: center.y },
+      { x: center.x + cornerRadius * sin30, y: center.y + apothem },
+      { x: center.x - cornerRadius * sin30, y: center.y + apothem },
+      { x: center.x - cornerRadius, y: center.y },
+      { x: center.x - cornerRadius * sin30, y: center.y - apothem },
+      { x: center.x + cornerRadius * sin30, y: center.y - apothem },
+    ];
+  }
+
+  // Axial coordinates for flat-top hexes:
+  // x = 1.5 * side * q
+  // y = sqrt(3) * side * (r + q/2)
+  for (let q = -rounded; q <= rounded; q++) {
+    const rMin = Math.max(-rounded, -q - rounded);
+    const rMax = Math.min(rounded, -q + rounded);
+    for (let r = rMin; r <= rMax; r++) {
+      const cellCenter = {
+        x: 1.5 * side * q,
+        y: side * Math.sqrt(3) * (r + q / 2),
+      };
+      const corners = getFlatTopHexCorners(cellCenter);
+      for (let i = 0; i < corners.length; i++) {
+        const start = corners[i];
+        const end = corners[(i + 1) % corners.length];
+        const key = edgeKey(start, end);
+        if (edges.has(key)) {
+          edges.delete(key);
+        } else {
+          edges.set(key, { start, end });
+        }
+      }
+    }
+  }
+
+  const nextByStart = new Map<string, Edge>();
+  for (const edge of edges.values()) {
+    nextByStart.set(pointKey(edge.start), edge);
+  }
+
+  const edgeList = [...edges.values()];
+  if (edgeList.length === 0) {
+    return [];
+  }
+  const startEdge = edgeList.reduce((best, edge) => {
+    if (!best) return edge;
+    if (edge.start.y < best.start.y) return edge;
+    if (edge.start.y === best.start.y && edge.start.x > best.start.x) return edge;
+    return best;
+  }, edgeList[0]);
+
+  const ordered: Vector2[] = [];
+  let current = startEdge;
+  let guard = 0;
+  while (current && guard < edges.size + 2) {
+    ordered.push(current.start);
+    const next = nextByStart.get(pointKey(current.end));
+    if (!next || pointKey(next.start) === pointKey(startEdge.start)) {
+      break;
+    }
+    current = next;
+    guard++;
+  }
+
+  const rotated = ordered.map((point) => rotatePoint(point, rotation));
+
+  // Ensure clockwise order for consistency.
+  const twiceArea = rotated.reduce((sum, p, i) => {
+    const next = rotated[(i + 1) % rotated.length];
+    return sum + (p.x * next.y - next.x * p.y);
+  }, 0);
+  if (twiceArea < 0) {
+    rotated.reverse();
+  }
+
+  return rotated;
+}
+
 function getRing(
   center: Vector2,
   size: number,
@@ -84,12 +227,14 @@ function getLabel(
     .fillColor(textColor)
     .fillOpacity(1.0)
     .plainText(text)
+    .lineHeight(0.9)
+    .fontSize(14)
     .position(Math2.subtract(center, offset))
     .pointerDirection("UP")
     .backgroundOpacity(0.8)
     .backgroundColor(backgroundColor)
-    .padding(8)
-    .cornerRadius(20)
+    .padding(6)
+    .cornerRadius(8)
     .pointerHeight(0)
     .metadata({
       [getPluginId("offset")]: offset,
@@ -125,10 +270,8 @@ async function getRings(
   const dpi = await OBR.scene.grid.getDpi();
   const gridScale = await OBR.scene.grid.getScale();
   const gridType = await OBR.scene.grid.getType();
-  // Keep existing inverted orientation for regular ranges.
+  // Match scene grid orientation for all hex ranges.
   const defaultRotation = gridType === "HEX_VERTICAL" ? 30 : 0;
-  // For center-cell ranges, align the hex orientation with the scene grid.
-  const centerCellRotation = defaultRotation === 30 ? 0 : 30;
   const color = getColorString(RING_COLOR);
   const textColor = getLabelTextColor(RING_COLOR, 180);
   const items = [];
@@ -136,13 +279,18 @@ async function getRings(
     const ring = range.rings[i];
     const radius = getRadiusForRing(ring, dpi);
     const roundedRadius = Math.floor(ring.radius);
-    const rotation =
-      roundedRadius === 0 ? centerCellRotation : defaultRotation;
+    const rotation = defaultRotation;
     const isHexGrid =
       gridType === "HEX_HORIZONTAL" || gridType === "HEX_VERTICAL";
     const size =
       isHexGrid && roundedRadius === 0 ? getCenterHexSize(dpi) : radius * 2;
-    items.push(getRing(center, size, ring.name, color, rotation));
+    if (isHexGrid) {
+      items.push(
+        getHexArea(center, roundedRadius, dpi, ring.name, color, rotation)
+      );
+    } else {
+      items.push(getRing(center, size, ring.name, color, rotation));
+    }
     const labelItemOffset = { x: 0, y: radius + labelOffset };
     let labelText = "";
     if (!range.hideLabel) {
