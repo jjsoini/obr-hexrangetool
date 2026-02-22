@@ -5,5 +5,5 @@
   "author": "Pulpscape",
   "icon": "/logo.png",
   "background_url": "/background.html",
-  "description": "Range tool for hex grids."
+  "description": "Adds a hex area range to the Measure Tool when using a scene with a hex grid."
 }
