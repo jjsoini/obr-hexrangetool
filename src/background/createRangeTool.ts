@@ -13,9 +13,12 @@ import { canUpdateItem } from "./permission";
 import { getPluginId } from "../util/getPluginId";
 import { getMetadata } from "../util/getMetadata";
 import { Ring, Range, defaultRanges } from "../ranges/ranges";
-
-type Color = { r: number; g: number; b: number };
-const RING_COLOR: Color = { r: 220, g: 38, b: 38 };
+import {
+  type Color,
+  RING_COLOR,
+  getColorString,
+  getPaletteColor,
+} from "../ranges/palette";
 import { flattenGridScale } from "../util/flattenGridScale";
 
 let rangeInteraction: InteractionManager<Item[]> | null = null;
@@ -25,9 +28,11 @@ let grabOffset: Vector2 = { x: 0, y: 0 };
 let downTarget: Item | null = null;
 let labelOffset = -16;
 
-function getColorString(color: Color) {
-  return `rgb(${color.r}, ${color.g}, ${color.b})`;
-}
+type Stroke = { color: string; width: number; opacity: number; dash: number[] };
+
+const DEFAULT_STROKE_WIDTH = 2;
+const DEFAULT_STROKE_OPACITY = 0.9;
+const DEFAULT_STROKE_DASH = [10, 10];
 
 function getRadiusForRing(ring: Ring, dpi: number) {
   // Floor to full grid cells, then offset by half a cell to account for the center
@@ -52,15 +57,16 @@ function getHexArea(
   dpi: number,
   name: string,
   color: string,
+  stroke: Stroke,
   rotation: number
 ) {
   return buildCurve()
     .fillColor(color)
     .fillOpacity(0.10)
-    .strokeWidth(2)
-    .strokeOpacity(0.9)
-    .strokeColor(color)
-    .strokeDash([10, 10])
+    .strokeWidth(stroke.width)
+    .strokeOpacity(stroke.opacity)
+    .strokeColor(stroke.color)
+    .strokeDash(stroke.dash)
     .tension(0)
     .closed(true)
     .position(center)
@@ -193,15 +199,16 @@ function getRing(
   size: number,
   name: string,
   color: string,
+  stroke: Stroke,
   rotation: number
 ) {
   return buildShape()
     .fillColor(color)
     .fillOpacity(0.10)
-    .strokeWidth(2)
-    .strokeOpacity(0.9)
-    .strokeColor(color)
-    .strokeDash([10, 10])
+    .strokeWidth(stroke.width)
+    .strokeOpacity(stroke.opacity)
+    .strokeColor(stroke.color)
+    .strokeDash(stroke.dash)
     .shapeType("HEXAGON")
     .position(center)
     .width(size)
@@ -221,7 +228,8 @@ function getLabel(
   offset: Vector2,
   text: string,
   backgroundColor: string,
-  textColor: string
+  textColor: string,
+  backgroundOpacity: number
 ) {
   return buildLabel()
     .fillColor(textColor)
@@ -231,7 +239,7 @@ function getLabel(
     .fontSize(14)
     .position(Math2.subtract(center, offset))
     .pointerDirection("UP")
-    .backgroundOpacity(0.8)
+    .backgroundOpacity(backgroundOpacity)
     .backgroundColor(backgroundColor)
     .padding(6)
     .cornerRadius(8)
@@ -265,7 +273,8 @@ half4 main(float2 coord) {
 
 async function getRings(
   center: Vector2,
-  range: Range
+  range: Range,
+  colorRings: boolean
 ): Promise<Item[]> {
   const dpi = await OBR.scene.grid.getDpi();
   const gridScale = await OBR.scene.grid.getScale();
@@ -277,6 +286,19 @@ async function getRings(
   const items = [];
   for (let i = 0; i < range.rings.length; i++) {
     const ring = range.rings[i];
+    const ringColor = colorRings ? getColorString(getPaletteColor(i)) : color;
+    // Colored rings use a thicker, solid, opaque outline and an opaque label
+    // so the color reads clearly
+    const stroke: Stroke = colorRings
+      ? { color: ringColor, width: 4, opacity: 1, dash: [] }
+      : {
+          color,
+          width: DEFAULT_STROKE_WIDTH,
+          opacity: DEFAULT_STROKE_OPACITY,
+          dash: DEFAULT_STROKE_DASH,
+        };
+    // Palette colors are all light enough for black text
+    const ringTextColor = colorRings ? "black" : textColor;
     const radius = getRadiusForRing(ring, dpi);
     const roundedRadius = Math.floor(ring.radius);
     const rotation = defaultRotation;
@@ -286,10 +308,20 @@ async function getRings(
       isHexGrid && roundedRadius === 0 ? getCenterHexSize(dpi) : radius * 2;
     if (isHexGrid) {
       items.push(
-        getHexArea(center, roundedRadius, dpi, ring.name, color, rotation)
+        getHexArea(
+          center,
+          roundedRadius,
+          dpi,
+          ring.name,
+          color,
+          stroke,
+          rotation
+        )
       );
     } else {
-      items.push(getRing(center, size, ring.name, color, rotation));
+      items.push(
+        getRing(center, size, ring.name, color, stroke, rotation)
+      );
     }
     const labelItemOffset = { x: 0, y: radius + labelOffset };
     let labelText = "";
@@ -304,7 +336,14 @@ async function getRings(
     }
     if (labelText) {
       items.push(
-        getLabel(center, labelItemOffset, labelText, color, textColor)
+        getLabel(
+          center,
+          labelItemOffset,
+          labelText,
+          ringColor,
+          ringTextColor,
+          colorRings ? 1 : 0.8
+        )
       );
     }
   }
@@ -415,7 +454,8 @@ export function registerRangeTool() {
       shaders = await getShaders();
       await OBR.scene.local.addItems(shaders);
 
-      const rangeItems = await getRings(initialPosition, range);
+      const colorRings = sceneMetadata[getPluginId("colorRings")] === true;
+      const rangeItems = await getRings(initialPosition, range, colorRings);
       rangeInteraction = await OBR.interaction.startItemInteraction(rangeItems);
     },
     async onToolDragStart() {

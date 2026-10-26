@@ -13,6 +13,11 @@ import { type Ring } from "../ranges/ranges";
 import NumberField from "../util/NumberField";
 import { useOBRContext } from "./OBRContext";
 import { flattenGridScale } from "../util/flattenGridScale";
+import {
+  RING_COLOR,
+  getColorString,
+  getPaletteColor,
+} from "../ranges/palette";
 
 const slideInRight = keyframes`
   from {
@@ -31,6 +36,7 @@ export function RingItem({
   ringIndex,
   hideSize,
   hideLabel,
+  colorRings,
 }: {
   ring: Ring;
   complete: number;
@@ -39,6 +45,7 @@ export function RingItem({
   ringIndex: number;
   hideSize?: boolean;
   hideLabel?: boolean;
+  colorRings?: boolean;
 }) {
   const { gridScale } = useOBRContext();
   const [localName, setLocalName] = useState(ring.name);
@@ -145,7 +152,9 @@ export function RingItem({
           left: 0,
           bottom: 0,
           zIndex: -1,
-          backgroundColor: "rgb(220, 38, 38)",
+          backgroundColor: getColorString(
+            colorRings ? getPaletteColor(ringIndex) : RING_COLOR
+          ),
           borderTopLeftRadius: "8px",
           borderBottomLeftRadius: "8px",
           borderTopRightRadius: "20px",
@@ -158,7 +167,7 @@ export function RingItem({
             animation: "none",
             width: "var(--width)",
           },
-          opacity: 0.2,
+          opacity: colorRings ? 0.4 : 0.2,
         }}
       />
     </ListItem>

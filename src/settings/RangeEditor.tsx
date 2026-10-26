@@ -21,10 +21,12 @@ export function RangeEditor({
   range,
   onChange,
   onDelete,
+  colorRings,
 }: {
   range: Range;
   onChange?: (range: Range) => void;
   onDelete?: (range: Range) => void;
+  colorRings?: boolean;
 }) {
   function addRing() {
     const maxRadius = Math.max(...range.rings.map((r) => r.radius));
@@ -79,6 +81,7 @@ export function RangeEditor({
                 }
                 hideLabel={range.hideLabel}
                 hideSize={range.hideSize}
+                colorRings={colorRings}
               />
             );
           })}

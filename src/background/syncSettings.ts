@@ -2,6 +2,7 @@ import OBR from "@owlbear-rodeo/sdk";
 import { getPluginId } from "../util/getPluginId";
 import { getLastUsedRange } from "../settings/lastUsed";
 import { defaultRanges } from "../ranges/ranges";
+import { getStoredColorRings } from "../settings/colorRings";
 
 export function syncSettings() {
   onScene(async () => {
@@ -53,12 +54,17 @@ async function syncRangeIfNeeded() {
   try {
     syncing = true;
     const metadata = await OBR.scene.getMetadata();
-    const range = metadata[getPluginId("range")];
-    if (range) {
+    const update: Record<string, unknown> = {};
+    if (!metadata[getPluginId("range")]) {
+      update[getPluginId("range")] = getLastUsedRange() ?? defaultRanges[0];
+    }
+    if (metadata[getPluginId("colorRings")] === undefined) {
+      update[getPluginId("colorRings")] = getStoredColorRings();
+    }
+    if (Object.keys(update).length === 0) {
       return;
     }
-    const lastUsedRange = getLastUsedRange() ?? defaultRanges[0];
-    await OBR.scene.setMetadata({ [getPluginId("range")]: lastUsedRange });
+    await OBR.scene.setMetadata(update);
   } finally {
     syncing = false;
   }

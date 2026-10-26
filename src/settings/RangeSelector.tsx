@@ -8,6 +8,8 @@ import { Range } from "../ranges/ranges";
 import IconButton from "@mui/material/IconButton";
 import CheckRounded from "@mui/icons-material/CheckRounded";
 import EditRounded from "@mui/icons-material/EditRounded";
+import PaletteRounded from "@mui/icons-material/PaletteRounded";
+import Tooltip from "@mui/material/Tooltip";
 
 export function RangeSelector({
   selectedRange,
@@ -19,6 +21,8 @@ export function RangeSelector({
   isEditing,
   isCustom,
   outdatedRange,
+  colorRings,
+  onToggleColorRings,
 }: {
   selectedRange: Range;
   customRanges: Range[];
@@ -29,6 +33,8 @@ export function RangeSelector({
   isEditing: boolean;
   isCustom: boolean;
   outdatedRange: boolean;
+  colorRings: boolean;
+  onToggleColorRings: () => void;
 }) {
   const ranges = [...defaultRanges, ...customRanges];
 
@@ -94,6 +100,17 @@ export function RangeSelector({
           {isEditing ? <CheckRounded /> : <EditRounded />}
         </IconButton>
       )}
+      <Tooltip title={colorRings ? "Hide Ring Colors" : "Show Ring Colors"}>
+        <IconButton
+          onClick={onToggleColorRings}
+          size="small"
+          color={colorRings ? "primary" : "default"}
+          aria-pressed={colorRings}
+          aria-label="Ring Colors"
+        >
+          <PaletteRounded />
+        </IconButton>
+      </Tooltip>
     </Stack>
   );
 }

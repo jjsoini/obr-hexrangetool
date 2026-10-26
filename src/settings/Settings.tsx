@@ -16,6 +16,7 @@ import { RangeSelector } from "./RangeSelector";
 import { getPluginId } from "../util/getPluginId";
 import { setLastUsedRange } from "./lastUsed";
 import { useOBRContext } from "./OBRContext";
+import { setStoredColorRings } from "./colorRings";
 
 function useCustomRanges() {
   const [customRanges, setCustomRanges] = useState<Range[]>(() =>
@@ -30,7 +31,9 @@ function useCustomRanges() {
 }
 
 export function Settings() {
-  const { range: defaultRange } = useOBRContext();
+  const { range: defaultRange, colorRings: defaultColorRings } =
+    useOBRContext();
+  const [colorRings, setColorRings] = useState(defaultColorRings);
   const [selectedRange, setSelectedRange] = useState<Range>(defaultRange);
   const [editing, setEditing] = useState(false);
   const [customRanges, setCustomRanges] = useCustomRanges();
@@ -51,6 +54,13 @@ export function Settings() {
     if (edit) {
       setEditing(true);
     }
+  }
+
+  function onToggleColorRings() {
+    const next = !colorRings;
+    setColorRings(next);
+    setStoredColorRings(next);
+    OBR.scene.setMetadata({ [getPluginId("colorRings")]: next });
   }
 
   function onDeleteRange(range: Range) {
@@ -125,6 +135,8 @@ export function Settings() {
           !outdatedRange && customRanges.some((r) => r.id === selectedRange.id)
         }
         outdatedRange={outdatedRange}
+        colorRings={colorRings}
+        onToggleColorRings={onToggleColorRings}
       />
       {unavailableRange && (
         <Alert severity="warning">
@@ -142,6 +154,7 @@ export function Settings() {
         range={selectedRange}
         onChange={editing ? onChangeRange : undefined}
         onDelete={editing ? onDeleteRange : undefined}
+        colorRings={colorRings}
       />
     </Stack>
   );

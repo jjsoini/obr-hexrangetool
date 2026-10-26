@@ -6,6 +6,7 @@ import { defaultRanges, Range } from "../ranges/ranges";
 type OBRContextValue = {
   gridScale: GridScale;
   range: Range;
+  colorRings: boolean;
 };
 
 const OBRContext = createContext<OBRContextValue | null>(null);
@@ -29,6 +30,7 @@ export function OBRContextProvider({
   }, []);
 
   const [range, setRange] = useState<Range | null>(null);
+  const [colorRings, setColorRings] = useState(false);
   useEffect(() => {
     let mounted = true;
     OBR.scene.getMetadata().then((metadata) => {
@@ -36,6 +38,7 @@ export function OBRContextProvider({
         const range = (metadata[getPluginId("range")] ??
           defaultRanges[0]) as Range;
         setRange(range);
+        setColorRings(metadata[getPluginId("colorRings")] === true);
       }
     });
   }, []);
@@ -45,7 +48,7 @@ export function OBRContextProvider({
   }
 
   return (
-    <OBRContext.Provider value={{ gridScale, range }}>
+    <OBRContext.Provider value={{ gridScale, range, colorRings }}>
       {children}
     </OBRContext.Provider>
   );

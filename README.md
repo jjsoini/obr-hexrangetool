@@ -14,6 +14,10 @@ Select the Hex Range mode from the measure tool (shortcut: **H**).
 
 Create your custom presets in the Settings
 
+### Ring Colors
+
+Toggle the palette button in the Settings to give each ring its own outline and label color. The colors come from a colorblind-friendly palette and repeat after five rings. The setting is shared with all players in the scene.
+
 ## License
 
 GNU GPLv3
